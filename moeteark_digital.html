@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Møteark – Bankbyttemøte</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --dark:    #1A2E50;
+    --blue:    #2E6DA4;
+    --blue-lt: #EAF2FB;
+    --blue-md: #C5DCF0;
+    --teal:    #1E7A6E;
+    --teal-lt: #E6F4F2;
+    --teal-md: #A8D8D3;
+    --gray:    #F2F4F8;
+    --gray-md: #C8CDD8;
+    --gray-dk: #666680;
+    --text:    #1A1A2E;
+    --white:   #ffffff;
+    --done-op: 0.45;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f0f4f9;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(26,46,80,0.12);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--dark);
+    padding: 20px 28px 14px;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.3px;
+  }
+  .header p {
+    font-size: 12px;
+    color: #92aec8;
+    margin-top: 2px;
+  }
+  .subheader {
+    background: var(--blue);
+    padding: 7px 28px;
+    font-size: 11.5px;
+    color: #c8dff2;
+  }
+
+  /* ── KUNDE INFO ── */
+  .info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 16px;
+    padding: 16px 28px 12px;
+    border-bottom: 1px solid var(--gray);
+  }
+  .info-field label {
+    display: block;
+    font-size: 10.5px;
+    color: var(--gray-dk);
+    margin-bottom: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .info-field input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--gray-md);
+    padding: 4px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    color: var(--text);
+    background: transparent;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .info-field input:focus { border-bottom-color: var(--blue); }
+  .info-field.date input { width: 130px; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    padding: 10px 28px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 5px;
+    background: var(--gray);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--teal));
+    border-radius: 99px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--gray-dk);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── PHASE ── */
+  .phase { margin-top: 0; }
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 28px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .phase-header.blue  { background: var(--blue); }
+  .phase-header.teal  { background: var(--teal); }
+
+  .phase-body {
+    border-left: 3px solid transparent;
+    margin: 0;
+  }
+  .phase-body.blue { border-left-color: var(--blue-md); background: var(--blue-lt); }
+  .phase-body.teal { border-left-color: var(--teal-md); background: var(--teal-lt); }
+
+  /* ── CHECKLIST ITEM ── */
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 20px 8px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: rgba(255,255,255,0.6); }
+  .item.checked { opacity: var(--done-op); }
+
+  .checkbox {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border: 2px solid var(--blue-md);
+    border-radius: 4px;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s;
+    background: white;
+  }
+  .item.teal-phase .checkbox { border-color: var(--teal-md); }
+  .item.checked .checkbox {
+    background: var(--blue);
+    border-color: var(--blue);
+  }
+  .item.teal-phase.checked .checkbox {
+    background: var(--teal);
+    border-color: var(--teal);
+  }
+  .checkbox svg { display: none; }
+  .item.checked .checkbox svg { display: block; }
+
+  .item-content { flex: 1; }
+  .item-label {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  .item.checked .item-label { text-decoration: line-through; color: var(--gray-dk); }
+
+  .sub-items {
+    margin-top: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .sub-item {
+    font-size: 11px;
+    color: var(--gray-dk);
+    padding-left: 10px;
+    line-height: 1.4;
+    position: relative;
+  }
+  .sub-item::before { content: '→'; position: absolute; left: 0; }
+
+  /* ── NOTE FIELD ── */
+  .note-wrap {
+    padding: 4px 20px 8px 44px;
+  }
+  .note-label {
+    font-size: 10px;
+    color: var(--gray-dk);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 3px;
+  }
+  .note-wrap textarea {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--gray-md);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    resize: none;
+    outline: none;
+    padding: 3px 0;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+  .note-wrap textarea:focus { border-bottom-color: var(--blue); }
+
+  /* ── GENERAL NOTES ── */
+  .notes-section {
+    padding: 12px 28px;
+    border-top: 1px solid var(--gray);
+  }
+  .notes-section h3 {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--dark);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+  }
+  .notes-section textarea {
+    width: 100%;
+    border: 1px solid var(--gray-md);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    color: var(--text);
+    resize: none;
+    outline: none;
+    background: var(--gray);
+    line-height: 1.6;
+    min-height: 64px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .notes-section textarea:focus {
+    border-color: var(--blue);
+    background: white;
+  }
+
+  /* ── SIGNATUR ── */
+  .sig-section {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    border-top: 1px solid var(--gray);
+  }
+  .sig-item {
+    padding: 7px 6px;
+    text-align: center;
+    font-size: 9.5px;
+    color: var(--gray-dk);
+    border-right: 1px solid var(--gray);
+    line-height: 1.35;
+  }
+  .sig-item:last-child { border-right: none; }
+  .sig-item span { display: block; font-size: 11px; margin-bottom: 1px; }
+
+  /* ── FOOTER / ACTIONS ── */
+  .actions {
+    display: flex;
+    gap: 10px;
+    padding: 14px 28px;
+    border-top: 1px solid var(--gray);
+    background: var(--dark);
+    justify-content: space-between;
+    align-items: center;
+  }
+  .actions .left { font-size: 11px; color: #92aec8; }
+  .actions .right { display: flex; gap: 8px; }
+
+  button {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-reset {
+    background: rgba(255,255,255,0.1);
+    color: #c0d4e8;
+  }
+  .btn-reset:hover { background: rgba(255,255,255,0.18); }
+  .btn-print {
+    background: var(--blue);
+    color: white;
+  }
+  .btn-print:hover { background: #2460910; filter: brightness(1.1); }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: white; padding: 0; }
+    .page { box-shadow: none; border-radius: 0; max-width: 100%; }
+    .actions { display: none; }
+    .progress-wrap { display: none; }
+    .item:hover { background: transparent; }
+    .checkbox { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .phase-header, .subheader, .header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .phase-body.blue, .phase-body.teal { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .item.checked .checkbox { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    textarea { border: none !important; }
+    .note-wrap textarea { border-bottom: 1px solid #ccc !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Møteark – Bankbyttemøte</h1>
+    <p>Sparebanken Norge · Sunnmøre · Internt møteark</p>
+  </div>
+  <div class="subheader">Kun til rådgivers eget bruk &nbsp;·&nbsp; Fyll ut og huk av underveis</div>
+
+  <!-- KUNDEINFO -->
+  <div class="info-row">
+    <div class="info-field">
+      <label>Kundenavn</label>
+      <input type="text" placeholder="Skriv navn..." />
+    </div>
+    <div class="info-field">
+      <label>Medlåntaker / ektefelle</label>
+      <input type="text" placeholder="Skriv navn..." />
+    </div>
+    <div class="info-field date">
+      <label>Dato</label>
+      <input type="date" />
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0 / 0</div>
+  </div>
+
+  <!-- FASE 1 -->
+  <div class="phase">
+    <div class="phase-header blue">📋 &nbsp;Fase 1 – Før møtet</div>
+    <div class="phase-body blue">
+      <div class="item" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Kunden har blitt kunde med BankID fra annen bank</div>
+        </div>
+      </div>
+      <div class="item" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Kodebrikke bestilt og mottatt</div>
+        </div>
+      </div>
+      <div class="item" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Arbeidsgiver varslet om nytt kontonummer (lønn)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 2 -->
+  <div class="phase">
+    <div class="phase-header teal">🤝 &nbsp;Fase 2 – I møtet</div>
+    <div class="phase-body teal">
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Mobilbank-appen lastet ned og tatt i bruk</div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Gyldig pass kontrollert</div>
+          <div class="sub-items">
+            <div class="sub-item">Begge voksne</div>
+            <div class="sub-item">Barn der aktuelt</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Bank-ID via SPN opprettet og testet</div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Kontoer opprettet med disponenter og navn</div>
+          <div class="sub-items">
+            <div class="sub-item">Kort bestilt (f.eks. matkonto)</div>
+            <div class="sub-item">Innskudd fra gammel bank overført (normalt 1 virkedag)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">AvtaleGiroer flyttes</div>
+          <div class="sub-items">
+            <div class="sub-item">Meny → Betale → AvtaleGiro og eFaktura → Flytt fra andre banker</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Konto / BSU i gammel bank – bankbytteskjema sendt (hvis aktuelt)</div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Gamle kort avsluttet / makulert</div>
+          <div class="sub-items">
+            <div class="sub-item">Gammel bank varslet for å unngå årsgebyr</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Barn registrert som kunder (der aktuelt)</div>
+          <div class="sub-items">
+            <div class="sub-item">Pass på barn medbringes</div>
+            <div class="sub-item">Konto opprettet med foreldre som disponenter</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Fond / ASK – vist i app eller nettbank</div>
+          <div class="sub-items">
+            <div class="sub-item">ASK flyttes først</div>
+            <div class="sub-item">Tilby oppfølgingsmøte for dypere fondsprat</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Lån kontrollert</div>
+          <div class="sub-items">
+            <div class="sub-item">Terminbeløp og løpetid korrekt</div>
+            <div class="sub-item">Forfallsdato avklart</div>
+            <div class="sub-item">Trekkonto satt opp</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Skadeforsikring – tips sendt til Frende</div>
+        </div>
+      </div>
+      <div class="note-wrap" onclick="event.stopPropagation()">
+        <div class="note-label">Notat Frende</div>
+        <textarea rows="2" placeholder="Skriv notat..."></textarea>
+      </div>
+
+      <div class="item teal-phase" onclick="toggle(this)">
+        <div class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-content">
+          <div class="item-label">Personforsikring – gjennomgått og avklart i møtet</div>
+        </div>
+      </div>
+      <div class="note-wrap" onclick="event.stopPropagation()">
+        <div class="note-label">Notat</div>
+        <textarea rows="2" placeholder="Skriv notat..."></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GENERAL NOTES -->
+  <div class="notes-section">
+    <h3>📝 &nbsp;Andre notater fra møtet</h3>
+    <textarea rows="3" placeholder="Skriv notater her..."></textarea>
+  </div>
+
+  <!-- SIGNATUROPPLEVELSENE -->
+  <div class="sig-section">
+    <div class="sig-item"><span>⭐</span>Vis at du bryr deg</div>
+    <div class="sig-item"><span>⭐</span>Gjør det enkelt</div>
+    <div class="sig-item"><span>⭐</span>Gi tydelige råd</div>
+    <div class="sig-item"><span>⭐</span>Si hva jeg kan forvente</div>
+    <div class="sig-item"><span>⭐</span>Oppdater underveis</div>
+    <div class="sig-item"><span>⭐</span>Hold det du lover</div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <div class="left">Sparebanken Norge · Sunnmøre · Internt møteark</div>
+    <div class="right">
+      <button class="btn-reset" onclick="resetAll()">Nullstill</button>
+      <button class="btn-print" onclick="window.print()">🖨 Skriv ut / Lagre PDF</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggle(el) {
+    el.classList.toggle('checked');
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const all = document.querySelectorAll('.item');
+    const done = document.querySelectorAll('.item.checked');
+    const pct = all.length ? (done.length / all.length) * 100 : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = done.length + ' / ' + all.length;
+  }
+
+  function resetAll() {
+    if (!confirm('Nullstille alle avkryssinger og notater?')) return;
+    document.querySelectorAll('.item').forEach(el => el.classList.remove('checked'));
+    document.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+    document.querySelectorAll('input[type="date"]').forEach(el => el.value = '');
+    document.querySelectorAll('textarea').forEach(el => el.value = '');
+    updateProgress();
+  }
+
+  // Set today's date
+  const dateInput = document.querySelector('input[type="date"]');
+  if (dateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
